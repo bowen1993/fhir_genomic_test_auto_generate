@@ -1,124 +1,29 @@
+'''
+automative test case generator based on resource defination
+@author: Bowen
+'''
+
 import csv
 import json
 import random
 import string
 from datetime import datetime, date
-
-def random_string_generate(length):
-    return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(length))
-
-def create_reference(reference_type):
-    reference_str = "%s/%s" % (reference_type, random_string_generate(5))
-    return {'reference':reference_str}
-
-def random_picker(pick_list):
-    low, high = 0, len(pick_list)
-    return pick_list[random.randint(low, high)]
-
-def create_string(suggested="", length=5):
-    if len(suggested) != 0:
-        return suggested
-    else:
-        return random_string_generate(length)
-
-def create_uri(suggested=""):
-    if len(suggested) != 0:
-        return suggested
-    else:
-        uri = 'http://%s.com' % random_string_generate(5)
-        return uri
-
-def create_codeableconcept(code=None, system=None):
-    concept_dict = {
-          "code": {
-            "coding": [
-              {
-                "system": system if system else create_uri(),
-                "code": code if code else random_string_generate(5)
-              }
-            ],
-          }
-        }
-    return concept_dict
-
-def create_quantity(customed_value=None, unit='oz'):
-
-    return {
-        'value':customed_value if customed_value else create_decimal(),
-        'comparator':'<=',
-        'unit':unit,
-        'system':''
-    }
-
-def create_simplequantity():
-    return create_quantity()
-
-def create_integer(customed=None):
-    if customed == None:
-        return random.randint(1,10)
-    else:
-        return customed
-
-def create_code(code="",customed='code'):
-    if len(code) != 0:
-        return {customed:code}
-    else:
-        return {customed:random_string_generate(5)}
-
-def create_attachment(data=None,content_type="application/pdf", language="en"):
-    return {
-        'contentType':content_type,
-        'language':language,
-        'date':data,
-        'title':random_string_generate(6)
-    }
-
-def create_instant():
-    return create_datetime()
-
-def create_decimal(customed=None):
-    if customed: 
-        return customed
-    else:
-        return random.uniform(0,10)
+from type_generator import *
+from config import *
 
 
-def create_annotation():
-    return {
-        'author': create_reference('Patient'),
-        'time':create_datetime(),
-        'text':random_string_generate(15)
-    }
-
-def create_age(age_value=None):
-    return create_quantity(age_value if age_value else random.randint(1,20), 'year')
-
-def create_boolean():
-    return random_picker([True, False])
-
-def create_date():
-    return date.today().isoformat()
-
-def create_datetime():
-    time_isoStr = datetime.now().isoformat(' ')
-    return time_isoStr
-
-def create_narrative():
-    return {
-        'status': random_picker(['generated', 'extensions', 'additional', 'empty']),
-        'div':'<p>%s</p>' % random_string_generate(20)
-    }
-
-def create_range(low=1.0, high=2.0):
-    return {
-        "low": create_quantity(low),
-        "high": create_quantity(high)
-    }
-
-def create_by_type(element_type):
-    
+possibles = globals().copy()
+possibles.update(locals())
 
 def trans_csv_to_dict(desc_csv_file):
+    '''
+    transform csv description file to dict object
+
+    @param desc_csv_file: description csv file
+    @type desc_csv_file: csv.reader
+    @return description dict
+    @rtype dict
+    '''
     res_dict = {}
     headers = []
     for index, row in enumerate(desc_csv_file):
@@ -136,3 +41,48 @@ def remove_prefix(element):
 
 def is_sub_element(element):
     return ['.' in element, None if '.' not in element else element[:element.find('.')]]
+
+def create_one_case(element_type, demand_value=None):
+    '''
+    create ont test case for a certain type. For reference type, a reference must be putted in demand value. Other type can be generate without and value
+
+    @param element_type: type to be generated, required
+    @type element_type: str
+    @param demand_value: user defined datas
+    @type demand_value: dict
+    @return generated type value
+    '''
+    if element_type.lower() == 'resource':
+        if demand_value and 'reference' in demand_value:
+            return create_reference(demand_value['reference'])
+        else:
+            return None
+    method_name = 'create_%s' % element_type.lower()
+    method = possibles.get(method_name)
+    if not method:
+        return None
+    if demand_value:
+        return method(**demand_value)
+    else:
+        return method()
+
+def create_cases(element_type, length, demand_values=None):
+    if length < 1:
+        return None
+    if length == 1:
+        return create_one_case(element_type, demand_values[0] if demand_values else None)
+    results = []
+    if element_type.lower() in customed_multi_list:
+        method_name = 'create_multi_%s'%element_type.lower()
+        method = possibles.get(method_name)
+        if not method:
+            pass
+        else:
+            results.extend(method(length,demand_values))
+    else:
+        for i in range(length):
+            results.append(create_one_case(element_type,demand_values[i] if demand_values else None))
+    return results
+
+
+    
