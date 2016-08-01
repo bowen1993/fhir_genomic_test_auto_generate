@@ -13,7 +13,7 @@ def random_string_generate(length):
     '''
     return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(length))
 
-def create_reference(reference_type, length=1):
+def create_reference(reference_type=None):
     '''
     create a reference object
 
@@ -22,7 +22,7 @@ def create_reference(reference_type, length=1):
     @return reference object
     @rtype:dict
     '''
-    reference_str = "%s/%s" % (reference_type, random_string_generate(5))
+    reference_str = "%s/%s" % (reference_type if reference_type else random_string_generate(3), random_string_generate(5))
     return {'reference':reference_str}
 
 def random_picker(pick_list):
@@ -34,7 +34,7 @@ def random_picker(pick_list):
     @return picked item
     @rtype: obj
     '''
-    low, high = 0, len(pick_list)
+    low, high = 0, len(pick_list)-1
     return pick_list[random.randint(low, high)]
 
 def create_string(suggested="", length=5):
@@ -86,7 +86,7 @@ def create_codeableconcept(code=None, system=None):
             "coding": [
               {
                 "system": system if system else create_uri(),
-                "code": code if code else random_string_generate(5)
+                "code": code if code else random_string_generate(5) + '1'
               }
             ],
           }

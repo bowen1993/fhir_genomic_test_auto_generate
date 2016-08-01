@@ -15,36 +15,27 @@ from config import *
 possibles = globals().copy()
 possibles.update(locals())
 
-def trans_csv_to_dict(desc_csv_file):
-    '''
-    transform csv description file to dict object
-
-    @param desc_csv_file: description csv file
-    @type desc_csv_file: csv.reader
-    @return description dict
-    @rtype dict
-    '''
-    res_dict = {}
-    headers = []
-    for index, row in enumerate(desc_csv_file):
-        if index == 0:
-            headers = row
-        else:
-            element = row[0]
-            res_dict[element] = {}
-            for subindex in range(1, len(headers)):
-                res_dict[element][headers[subindex]] = row[subindex]
-    return res_dict
-
 def remove_prefix(element):
     return element[element.find('.')+1:]
 
 def is_sub_element(element):
     return ['.' in element, None if '.' not in element else element[:element.find('.')]]
 
+def control_analyze(control_str):
+    if control_str == '0..0':
+        return 0
+    if control_str == '0..1':
+        return 1
+    if control_str == '0..*':
+        return 2
+    if control_str == '1..1':
+        return 3
+    if control_str == '1..*':
+        return 4
+
 def create_one_case(element_type, demand_value=None):
     '''
-    create ont test case for a certain type. For reference type, a reference must be putted in demand value. Other type can be generate without and value
+    create ont test case for a certain type. type can be generate without and value
 
     @param element_type: type to be generated, required
     @type element_type: str
@@ -52,11 +43,8 @@ def create_one_case(element_type, demand_value=None):
     @type demand_value: dict
     @return generated type value
     '''
-    if element_type.lower() == 'resource':
-        if demand_value and 'reference' in demand_value:
-            return create_reference(demand_value['reference'])
-        else:
-            return None
+    if 'reference' in element_type.lower():
+        element_type = 'reference'
     method_name = 'create_%s' % element_type.lower()
     method = possibles.get(method_name)
     if not method:
@@ -84,5 +72,43 @@ def create_cases(element_type, length, demand_values=None):
             results.append(create_one_case(element_type,demand_values[i] if demand_values else None))
     return results
 
+def create_all_cases_for_type(element_type, control, bindings=None):
+    results = {
+    'right':[],
+    'wrong':[]
+    }
+    #create right cases
+    if control == 0:
+        results['right'].append(None)
+    elif control == 1:
+        results['right'].append(None)
+        results['right'].append(create_cases(element_type, 1, [bindings]))
+    elif control == 2:
+        results['right'].append(None)
+        results['right'].append([create_cases(element_type, 1, [bindings])])
+        results['right'].append(create_cases(element_type, 2, [bindings, bindings]))
+    elif control == 3:
+        results['right'].append(create_cases(element_type, 1, [bindings]))
+    elif control == 4:
+        results['right'].append([create_cases(element_type, 1, [bindings])])
+        results['right'].append(create_cases(element_type, 2, [bindings, bindings]))
+    #create wrong control cases:
+    if control == 0:
+        results['wrong'].append(create_cases(element_type, 1, [bindings]))
+    elif control == 1:
+        results['wrong'].append(create_cases(element_type, 2, [bindings, bindings]))
+    elif control == 3:
+        results['wrong'].append(None)
+        results['wrong'].append(create_cases(element_type, 2, [bindings, bindings]))
+    elif control == 4:
+        results['wrong'].append(None)
+    #create wrong content cases
+    if bindings:
+        if control == 1:
+            results['wrong'].append(create_cases(element_type, 1))
+        elif control == 2 or control == 4:
+            results['wrong'].append([create_cases(element_type, 1)])
+        elif control == 3:
+            results['wrong'].append(create_cases(element_type, 1))
+    return results
 
-    
