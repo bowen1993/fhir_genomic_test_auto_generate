@@ -24,8 +24,8 @@ if __name__ == '__main__':
     # non_function_types = ['resource','extension', 'id', 'identifier', 'backboneelement','meta','see observation.referencerange']
     #print create_reference()
     #print create_all_cases_for_type('codeableconcept', 3, {'code':'123123', 'system':'http://lonic.org'})
-    csv_reader = csv.reader(open('../Sequence.csv', 'r'))
+    csv_reader = csv.reader(open('../Observation.csv', 'r'))
     detail_dict = trans_csv_to_dict(csv_reader)
     test_cases = create_element_test_cases(detail_dict)
-    create_all_test_cases(test_cases)
+    create_orthogonal_test_cases(test_cases)
 

@@ -47,6 +47,54 @@ def combine_all_lists(lists):
         res_list.append(tempItem)
     return res_list
 
+def create_orthogonal_test_cases(element_test_cases):
+    #get all right cases
+    element_right_cases = {}
+    element_name_lists = []
+    for element in element_test_cases:
+        element_name_lists.append(element)
+        if element_test_cases[element] == 'backbone' or len(element_test_cases[element]['right']) == 0:
+            continue
+        element_right_cases[element] = element_test_cases[element]['right']
+    #get all wrong test cases
+    element_wrong_cases = {}
+    for element in element_test_cases:
+        if element_test_cases[element] == 'backbone' or len(element_test_cases[element]['wrong']) == 0:
+            continue
+        element_wrong_cases[element] = element_test_cases[element]['wrong']
+    #generate orthogonal right test cases
+    max_length = 0
+    right_cases = []
+    for key in element_right_cases:
+        if len(element_right_cases[key]) > max_length:
+            max_length = len(element_right_cases[key])
+    for index in xrange(max_length):
+        new_test_case = {}
+        for key in element_right_cases:
+            try:
+                new_test_case[key] = element_right_cases[key][index]
+            except:
+                new_test_case[key] = element_right_cases[key][len(element_right_cases[key])-1]
+        right_cases.append(new_test_case)
+    #generate orthogonal wrong test cases
+    wrong_cases = []
+    for key in element_wrong_cases:
+        cases = element_wrong_cases[key]
+        for case in cases:
+            wrong_case = {}
+            wrong_case[key] = case
+            for subkey in element_name_lists:
+                if subkey == key:
+                    continue
+                if subkey not in element_right_cases:
+                    continue
+                wrong_case[subkey] = element_right_cases[subkey]
+            wrong_cases.append(wrong_case)
+    all_cases = right_cases + wrong_cases
+    total_cases = len(all_cases)
+    print total_cases
+    
+
 def create_all_test_cases(element_test_cases):
     #generate all right test cases
     element_right_cases = {}
