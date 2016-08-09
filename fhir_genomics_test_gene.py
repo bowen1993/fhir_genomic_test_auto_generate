@@ -17,6 +17,7 @@ def trans_csv_to_dict(csv_file):
 
 def create_element_test_cases(detail_dict):
     test_cases = {}
+    curr_parent = ''
     for element in detail_dict:
         non_prefix_element = remove_prefix(element)
         element_type = detail_dict[element]['Type']
@@ -31,6 +32,8 @@ def create_element_test_cases(detail_dict):
             if 'reference' in element_type.lower():
                 binding = {'reference_type':detail_dict[element]['Reference']}
                 element_type = 'reference'
+            if '[x]' in non_prefix_element:
+                non_prefix_element = non_prefix_element[:non_prefix_element.find('[')] + element_type.title()
             test_cases[non_prefix_element] = create_all_cases_for_type(element_type, control, binding)
     return test_cases
 
@@ -70,29 +73,74 @@ def create_orthogonal_test_cases(element_test_cases):
             max_length = len(element_right_cases[key])
     for index in xrange(max_length):
         new_test_case = {}
+        curr_parent = ''
         for key in element_right_cases:
-            try:
-                new_test_case[key] = element_right_cases[key][index]
-            except:
-                new_test_case[key] = element_right_cases[key][len(element_right_cases[key])-1]
+            if is_sub(key):
+                curr_parent = get_prefix(key)
+            else:
+                curr_parent = ''
+            non_prefix_key = remove_prefix(key)
+            if index < len(element_right_cases[key]):
+                i = index
+            else:
+                i = len(element_right_cases[key])-1
+            if len(curr_parent) > 0:
+                if curr_parent in new_test_case:
+                    new_test_case[curr_parent][non_prefix_key] = element_right_cases[key][i]
+                else:
+                    new_test_case[curr_parent] = {
+                        non_prefix_key:element_right_cases[key][i]
+                    }
+            else:
+                try:
+                    new_test_case[key] = element_right_cases[key][index]
+                except:
+                    new_test_case[key] = element_right_cases[key][len(element_right_cases[key])-1]
         right_cases.append(new_test_case)
     #generate orthogonal wrong test cases
     wrong_cases = []
+    curr_parent = ''
     for key in element_wrong_cases:
+        if is_sub(key):
+            curr_parent = get_prefix(key)
+        else:
+            curr_parent = ''
+        non_prefix_key = remove_prefix(key)
         cases = element_wrong_cases[key]
         for case in cases:
             wrong_case = {}
-            wrong_case[key] = case
+            if len(curr_parent) > 0:
+                if curr_parent in wrong_case:
+                    wrong_case[curr_parent][non_prefix_key] = case
+                else:
+                    wrong_case[curr_parent] = {
+                        non_prefix_key:case
+                    }
+            else:
+                wrong_case[key] = case
             for subkey in element_name_lists:
                 if subkey == key:
                     continue
                 if subkey not in element_right_cases:
                     continue
-                wrong_case[subkey] = element_right_cases[subkey]
+                if is_sub(subkey):
+                    curr_parent = get_prefix(subkey)
+                else:
+                    curr_parent = ''
+                non_prefix_subkey = remove_prefix(subkey)
+                if len(curr_parent) > 0:
+                    if curr_parent in wrong_case:
+                        wrong_case[curr_parent][non_prefix_subkey] = element_right_cases[subkey]
+                    else:
+                        wrong_case[curr_parent] = {
+                        non_prefix_subkey:element_right_cases[subkey]
+                        }
+                else:
+                    wrong_case[subkey] = element_right_cases[subkey]
             wrong_cases.append(wrong_case)
     all_cases = right_cases + wrong_cases
     total_cases = len(all_cases)
-    print total_cases
+    return  all_cases
     
 
 def create_all_test_cases(element_test_cases):
@@ -126,7 +174,7 @@ def create_all_test_cases(element_test_cases):
             wrong_cases.append(wrong_case)
     all_cases = right_cases + wrong_cases
     total_cases = len(all_cases)
-    print total_cases
+    return all_cases
 
 
     

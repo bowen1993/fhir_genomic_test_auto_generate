@@ -68,7 +68,7 @@ def create_uri(suggested=""):
         uri = 'http://%s.com' % random_string_generate(5)
         return uri
 
-def create_codeableconcept(code=None, system=None):
+def create_codeableconcept(code=None, system=None, start_with_code=False):
     '''
     create a codeable concept
 
@@ -81,20 +81,30 @@ def create_codeableconcept(code=None, system=None):
     '''
     #TODO: generate concept with multiply coding
     #TODO: add display
-    concept_dict = {
-          "code": {
-            "coding": [
-              {
-                "system": system if system else create_uri(),
-                "code": code if code else random_string_generate(5) + '1'
+    if start_with_code:
+        concept_dict = {
+              "code": {
+                "coding": [
+                  {
+                    "system": system if system else create_uri(),
+                    "code": code if code else random_string_generate(5) + '1'
+                  }
+                ],
               }
-            ],
-          }
-        }
+            }
+    else:
+        concept_dict = {
+                "coding": [
+                  {
+                    "system": system if system else create_uri(),
+                    "code": code if code else random_string_generate(5) + '1'
+                  }
+                ],
+              }
     return concept_dict
 
 
-def create_quantity(customed_value=None, unit='oz', comparator='<='):
+def create_quantity(customed_value=None, unit='oz', comparator='='):
     '''
     create quantity randomly, or user defined
 

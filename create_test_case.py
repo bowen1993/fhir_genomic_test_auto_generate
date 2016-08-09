@@ -16,10 +16,19 @@ possibles = globals().copy()
 possibles.update(locals())
 
 def remove_prefix(element):
-    return element[element.find('.')+1:]
+    if '.' in element:
+        return element[element.find('.')+1:]
+    else:
+        return element
+
+def get_prefix(element):
+    return element[:element.find('.')]
 
 def is_sub_element(element):
     return ['.' in element, None if '.' not in element else element[:element.find('.')]]
+
+def is_sub(element):
+    return '.' in element
 
 def control_analyze(control_str):
     if control_str == '0..0':
