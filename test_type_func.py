@@ -2,6 +2,7 @@
 test code
 @author: Bowen
 '''
+import json
 
 import csv
 from create_test_case import *
@@ -28,10 +29,11 @@ if __name__ == '__main__':
     csv_reader = csv.reader(open('../FamilyMemberHistory.csv', 'r'))
     detail_dict = trans_csv_to_dict(csv_reader)
     test_cases = create_element_test_cases(detail_dict)
-    all_cases = create_orthogonal_test_cases(test_cases)
-    for index, case in enumerate(all_cases):
+    right_cases, wrong_cases = create_orthogonal_test_cases(test_cases)
+    for index, case in enumerate(right_cases):
         #add wrap
         case['resourceType'] = 'FamilyMemberHistory'
+        print json.dumps(case)
         final_case = {
         'FamilyMemberHistory':case
         }
